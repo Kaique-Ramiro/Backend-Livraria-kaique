@@ -1,19 +1,19 @@
 import express from "express";
-import { listarUsuarios,
-         criarUsuario, 
-         obterUsuario, 
-         atualizarUsuario, 
-         deletarUsuario } 
-         from "../controllers/usuario.controllers.js";
+import {
+  listarLivros,
+  obterLivro,
+  criarLivro,
+  atualizarLivro,
+  deletarLivro
+} from "../controllers/livro.controllers.js";
 
 const router = express.Router();
 
-
-router.get("/", listarUsuarios);
-router.post("/", criarUsuario);
-router.get("/:id", obterUsuario);
-router.put("/:id", atualizarUsuario);
-router.delete("/:id", deletarUsuario);
-
+router.get("/", listarLivros);
+router.post("/", criarLivro);
+router.get("/:id", obterLivro);
+router.put("/:id", atualizarLivro);
+router.delete("/:id", deletarLivro);
 
 export default router;
+
