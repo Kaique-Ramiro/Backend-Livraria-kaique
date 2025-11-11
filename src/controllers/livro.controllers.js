@@ -1,81 +1,101 @@
-let livros = [
-  { id: 1, titulo: "Dom Casmurro", autor: "Machado de Assis" },
-  { id: 2, titulo: "O Cortiço", autor: "Aluísio Azevedo" }
-];
+import { db } from "../config/db.js";
 
-// Listar todos os livros
+
+// LISTAR LIVROS
+
 export const listarLivros = async (req, res) => {
   try {
-    res.status(200).json(livros);
+    const [rows] = await db.query("SELECT * FROM livros");
+    res.status(200).json(rows);
   } catch (error) {
-    res.status(500).json({ erro: "Erro ao listar os livros." });
+    console.error("Erro ao listar livros:", error);
+    res.status(500).json({ message: "Erro ao buscar livros" });
   }
 };
 
-// Obter um livro específico pelo ID
+
+// OBTER LIVRO POR ID
+
 export const obterLivro = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const livro = livros.find(l => l.id === id);
+    const { id } = req.params;
+    const [rows] = await db.query("SELECT * FROM livros WHERE id = ?", [id]);
 
-    if (!livro) {
-      return res.status(404).json({ erro: "Livro não encontrado." });
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Livro não encontrado" });
     }
 
-    res.status(200).json(livro);
+    res.status(200).json(rows[0]);
   } catch (error) {
-    res.status(500).json({ erro: "Erro ao buscar o livro." });
+    console.error("Erro ao buscar livro:", error);
+    res.status(500).json({ message: "Erro ao buscar livro" });
   }
 };
 
-// Criar um novo livro
+
+// CRIAR LIVRO
+
 export const criarLivro = async (req, res) => {
   try {
-    const novoLivro = {
-      id: livros.length + 1,
-      titulo: req.body.titulo,
-      autor: req.body.autor
-    };
+    const { titulo, autor } = req.body;
 
-    livros.push(novoLivro);
-    res.status(201).json(novoLivro);
+    if (!titulo || !autor) {
+      return res.status(400).json({ message: "Título e autor são obrigatórios" });
+    }
+
+    const sql = "INSERT INTO livros (titulo, autor) VALUES (?, ?)";
+    const [result] = await db.query(sql, [titulo, autor]);
+
+    res.status(201).json({
+      id: result.insertId,
+      titulo,
+      autor
+    });
   } catch (error) {
-    res.status(500).json({ erro: "Erro ao criar o livro." });
+    console.error("Erro ao criar livro:", error);
+    res.status(500).json({ message: "Erro ao criar livro" });
   }
 };
 
-// Atualizar um livro existente
+
+// ATUALIZAR LIVRO
+
 export const atualizarLivro = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const livro = livros.find(l => l.id === id);
+    const { id } = req.params;
+    const { titulo, autor } = req.body;
 
-    if (!livro) {
-      return res.status(404).json({ erro: "Livro não encontrado." });
+    const [livroExistente] = await db.query("SELECT * FROM livros WHERE id = ?", [id]);
+    if (livroExistente.length === 0) {
+      return res.status(404).json({ message: "Livro não encontrado" });
     }
 
-    livro.titulo = req.body.titulo || livro.titulo;
-    livro.autor = req.body.autor || livro.autor;
+    const sql = "UPDATE livros SET titulo = ?, autor = ? WHERE id = ?";
+    await db.query(sql, [titulo || livroExistente[0].titulo, autor || livroExistente[0].autor, id]);
 
-    res.status(200).json(livro);
+    res.status(200).json({ id, titulo, autor });
   } catch (error) {
-    res.status(500).json({ erro: "Erro ao atualizar o livro." });
+    console.error("Erro ao atualizar livro:", error);
+    res.status(500).json({ message: "Erro ao atualizar livro" });
   }
 };
 
-// Deletar um livro pelo ID
+
+// DELETAR LIVRO
+
 export const deletarLivro = async (req, res) => {
   try {
-    const id = parseInt(req.params.id);
-    const index = livros.findIndex(l => l.id === id);
+    const { id } = req.params;
+    const [livroExistente] = await db.query("SELECT * FROM livros WHERE id = ?", [id]);
 
-    if (index === -1) {
-      return res.status(404).json({ erro: "Livro não encontrado." });
+    if (livroExistente.length === 0) {
+      return res.status(404).json({ message: "Livro não encontrado" });
     }
 
-    livros.splice(index, 1);
-    res.status(204).send(); // sem conteúdo
+    await db.query("DELETE FROM livros WHERE id = ?", [id]);
+    res.status(204).send();
   } catch (error) {
-    res.status(500).json({ erro: "Erro ao excluir o livro." });
+    console.error("Erro ao excluir livro:", error);
+    res.status(500).json({ message: "Erro ao excluir livro" });
   }
 };
