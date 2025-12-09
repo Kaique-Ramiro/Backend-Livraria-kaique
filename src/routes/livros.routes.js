@@ -9,10 +9,6 @@ import {
 
 const router = express.Router();
 
-// ============================
-// ROTAS DE LIVROS
-// ============================
-
 // Retorna todos os livros
 router.get("/", listarLivros);
 
